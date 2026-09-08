@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>丹宸 · 体素中国古典建筑群</title>
+  <style>
+    :root {
+      --ink: rgba(20, 16, 14, 0.72);
+      --gold: #e8c96d;
+      --vermilion: #c14434;
+      --line: rgba(232, 201, 109, 0.28);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; overflow: hidden; background: #171a24; }
+    body {
+      font-family: "Songti SC", "Noto Serif SC", "Source Han Serif SC", "SimSun", serif;
+      color: #f2ead9;
+      -webkit-font-smoothing: antialiased;
+    }
+    #app { position: fixed; inset: 0; }
+    canvas { display: block; }
+
+    .panel {
+      position: fixed;
+      background: var(--ink);
+      border: 1px solid var(--line);
+      border-radius: 3px;
+      backdrop-filter: blur(9px) saturate(1.1);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.42);
+    }
+
+    #title {
+      top: 20px; left: 20px;
+      padding: 14px 20px 15px;
+      max-width: 330px;
+    }
+    #title h1 {
+      margin: 0;
+      font-size: 25px;
+      font-weight: 500;
+      letter-spacing: 0.26em;
+      color: var(--gold);
+      text-shadow: 0 0 22px rgba(232, 201, 109, 0.28);
+    }
+    #title .sub {
+      margin-top: 7px;
+      font-size: 11.5px;
+      letter-spacing: 0.18em;
+      color: rgba(242, 234, 217, 0.55);
+    }
+    #title .rule {
+      height: 1px; margin: 11px 0 9px;
+      background: linear-gradient(90deg, var(--vermilion), rgba(232,201,109,0.5), transparent);
+    }
+    #title .ax {
+      font-size: 11px; line-height: 1.85; letter-spacing: 0.08em;
+      color: rgba(242, 234, 217, 0.42);
+    }
+    #title .ax b { color: rgba(242, 234, 217, 0.7); font-weight: 500; }
+
+    #hud {
+      bottom: 20px; left: 20px;
+      padding: 11px 16px 12px;
+      display: flex; gap: 20px;
+      font-size: 11.5px; letter-spacing: 0.12em;
+    }
+    #hud div span { color: rgba(242, 234, 217, 0.45); margin-right: 6px; }
+    #hud b { font-weight: 500; color: var(--gold); font-variant-numeric: tabular-nums; }
+
+    #time {
+      top: 20px; right: 20px;
+      padding: 12px 14px;
+    }
+    #time .cap {
+      font-size: 10.5px; letter-spacing: 0.22em;
+      color: rgba(242, 234, 217, 0.4);
+      margin-bottom: 10px; text-align: center;
+    }
+    .btns { display: flex; gap: 6px; }
+    button {
+      font: inherit; cursor: pointer;
+      width: 42px; height: 40px;
+      font-size: 15px; letter-spacing: 0;
+      color: rgba(242, 234, 217, 0.66);
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(232, 201, 109, 0.16);
+      border-radius: 2px;
+      transition: all 0.18s ease;
+    }
+    button:hover { color: var(--gold); border-color: rgba(232, 201, 109, 0.5); background: rgba(232, 201, 109, 0.08); }
+    button.on {
+      color: #1b1207; background: var(--gold);
+      border-color: var(--gold);
+      box-shadow: 0 0 18px rgba(232, 201, 109, 0.34);
+    }
+    #reset {
+      display: block; width: 100%; height: 30px; margin-top: 8px;
+      font-size: 11px; letter-spacing: 0.18em;
+    }
+
+    #hint {
+      bottom: 22px; left: 50%; transform: translateX(-50%);
+      padding: 8px 20px;
+      font-size: 11px; letter-spacing: 0.2em;
+      color: rgba(242, 234, 217, 0.4);
+      white-space: nowrap;
+      pointer-events: none;
+      transition: opacity 0.6s ease;
+    }
+
+    #veil {
+      position: fixed; inset: 0; z-index: 9;
+      display: grid; place-items: center;
+      background: radial-gradient(ellipse at 50% 45%, #2a2334, #0d1018 78%);
+      transition: opacity 0.9s ease;
+      font-size: 12px; letter-spacing: 0.4em; color: rgba(232, 201, 109, 0.6);
+    }
+    #veil.gone { opacity: 0; pointer-events: none; }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+
+  <div id="veil">叠 砌 体 素 之 中</div>
+
+  <section id="title" class="panel">
+    <h1>丹宸</h1>
+    <div class="sub">体素 · 中国古典建筑群</div>
+    <div class="rule"></div>
+    <div class="ax">
+      中轴九进 · 殿阁塔亭<br />
+      <b>山门</b> → 前院 → <b>牌楼</b> → 配殿 → <b>主殿</b> → 藏经阁
+    </div>
+  </section>
+
+  <section id="time" class="panel">
+    <div class="cap">时 辰</div>
+    <div class="btns">
+      <button data-preset="chen">晨</button>
+      <button data-preset="wu">午</button>
+      <button data-preset="hun" class="on">昏</button>
+      <button data-preset="ye">夜</button>
+    </div>
+    <button id="reset">复位视角</button>
+  </section>
+
+  <section id="hud" class="panel">
+    <div><span>体素</span><b id="stat-voxel">—</b></div>
+    <div><span>建筑</span><b id="stat-build">—</b></div>
+    <div><span>帧率</span><b id="stat-fps">—</b></div>
+  </section>
+
+  <div id="hint">拖拽旋转 · 滚轮缩放 · 右键平移</div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
